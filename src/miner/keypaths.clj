@@ -1,3 +1,8 @@
+(ns miner.keypaths)
+
+;; SEM: Slightly modified by Steve Miner to make it easier for me to run.  My additions have
+;; a SEM comment.
+
 ;; Marshall Abrams
 ;; Ways to list key paths in embedded maps
 
@@ -17,6 +22,17 @@
                   (into res (miner49r-keypaths (conj prev k) v))
                   (conj res (conj prev k))))
               []
+              m)))
+
+;; SEM: better version
+(defn miner49r-keypaths-acc
+  ([m] (miner49r-keypaths-acc [] m ()))
+  ([prev m result]
+   (reduce-kv (fn [res k v] 
+                (if (map? v)
+                  (miner49r-keypaths-acc (conj prev k) v res)
+                  (conj res (conj prev k))))
+              result
               m)))
 
 ;; A. Webb's:
@@ -55,6 +71,17 @@
     (for [[k v] m
           subkey (amalloy-keypaths v)]
       (cons k subkey))))
+
+
+(defn amalloy-keypaths-vec [m]
+  (if (or (not (map? m))
+          (empty? m))
+    '(())
+    (for [[k v] m
+          subkey (amalloy-keypaths-vec v)]
+      (vec (cons k subkey)))))
+
+
 
 ;; noisesmith's at duplicate question:
 ;; http://stackoverflow.com/questions/25268818/get-key-chains-of-a-tree-in-clojure
@@ -137,6 +164,8 @@
 (def keypath-fns [["simple-specter-keypaths" simple-specter-keypaths]
                   ["fast-specter-keypaths"   fast-specter-keypaths]
                   ["miner49r-keypaths"	     miner49r-keypaths]
+                  ["miner49r-keypaths-acc"	     miner49r-keypaths-acc]
+                  ["miner49r-kpa"	     miner49r-kpa]
                   ["amalloy-keypaths"	     amalloy-keypaths]
                   ["noisesmith-keypaths"     noisesmith-keypaths]
                   ["AWebb-keypaths"	     AWebb-keypaths]
@@ -154,11 +183,17 @@
             (repeat (make-big-map width (dec depth))))
     nil))
 
+(defn work [coll]
+  (transduce (map hash) max Long/MIN_VALUE coll))
+
+;; SEM: removed `def` from benchmark test.  Did some computation to defeat laziness and
+;; caching.  Use quick-bench for faster results.
 (defn test-keypath-fns
-  [m]
+  ([] (test-keypath-fns (make-big-map 3 3)))
+  ([m]
   (doseq [[nam fun] keypath-fns]
     (println "-------------------------------------------------------\n" nam)
-    (bench (def _ (doall (fun m))))))
+    (quick-bench (work (fun m))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Versions that return intermediate keypaths as well:
@@ -200,6 +235,18 @@
                               (conj res (conj prev k))))
               []
               m)))
+
+;; SEM: better version
+(defn miner49r-keypaths-all-acc
+  ([m] (miner49r-keypaths-all-acc [] m ()))
+  ([prev m result]
+   (reduce-kv (fn [res k v] (if (associative? v)
+                              (let [kp (conj prev k)]
+                                (miner49r-keypaths-all kp v (conj res kp)))
+                              (conj res (conj prev k))))
+              result
+              m)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
