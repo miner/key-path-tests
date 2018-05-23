@@ -165,7 +165,6 @@
                   ["fast-specter-keypaths"   fast-specter-keypaths]
                   ["miner49r-keypaths"	     miner49r-keypaths]
                   ["miner49r-keypaths-acc"	     miner49r-keypaths-acc]
-                  ["miner49r-kpa"	     miner49r-kpa]
                   ["amalloy-keypaths"	     amalloy-keypaths]
                   ["noisesmith-keypaths"     noisesmith-keypaths]
                   ["AWebb-keypaths"	     AWebb-keypaths]
@@ -186,14 +185,32 @@
 (defn work [coll]
   (transduce (map hash) max Long/MIN_VALUE coll))
 
-;; SEM: removed `def` from benchmark test.  Did some computation to defeat laziness and
-;; caching.  Use quick-bench for faster results.
+(defn validate? [nam fun]
+  (let [sample {:a :A, :b :B, :c {:d :D}, :e {:f {:g :G, :h :H}}}
+        answer-set #{[:a] [:b] [:c :d] [:e :f :g] [:e :f :h]}
+        answer-set2 #{:a :b [:c :d] [:e :f :g] [:e :f :h]}
+        result (fun sample)
+        result-set (set result)
+        valid (or (= result-set answer-set)
+                  (= result-set answer-set2))]
+    (when-not valid
+      (println "***" nam "yields unexpected result for sample ***")
+      (println "(" nam sample ") ==>")
+      (println result)
+      (println))
+    valid))
+
+;; SEM: removed `def` from benchmark test.  Added some computation to defeat laziness and
+;; caching that might give misleading times.  Use quick-bench for faster results as we only
+;; care about relative times between the implementations.
 (defn test-keypath-fns
-  ([] (test-keypath-fns (make-big-map 3 3)))
+  ([] (test-keypath-fns (make-big-map 6 6)))
   ([m]
-  (doseq [[nam fun] keypath-fns]
-    (println "-------------------------------------------------------\n" nam)
-    (quick-bench (work (fun m))))))
+   (println "Sample size:" (count m))
+   (doseq [[nam fun] keypath-fns]
+     (println "-------------------------------------------------------\n" nam)
+     (validate? nam fun)
+     (quick-bench (work (fun m))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Versions that return intermediate keypaths as well:

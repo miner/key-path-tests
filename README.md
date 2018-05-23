@@ -1,5 +1,14 @@
 # key-path-tests
 
+This fork adds a faster implementation by miner49r and automates the tests so you can just
+do `lein run` to get reasonable results.  The files were put into my own namespace so it
+won't conflict with the original.  I did not update the results page.  You can run
+the tests for yourself.
+
+The original README follows:
+
+----
+
 Speed tests of Clojure functions that return sequences of sequences of
 keys representing paths through embedded maps.
 
