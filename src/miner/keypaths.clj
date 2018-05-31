@@ -169,7 +169,8 @@
                   ["noisesmith-keypaths"     noisesmith-keypaths]
                   ["AWebb-keypaths"	     AWebb-keypaths]
                   ["AlexMiller-keypaths"     AlexMiller-keypaths]
-                  ["simple-specter-keypaths-with-leaves" simple-specter-keypaths-with-leaves]])
+                  #_ ["simple-specter-keypaths-with-leaves" simple-specter-keypaths-with-leaves]
+                  ])
 
 (use 'criterium.core)
 
