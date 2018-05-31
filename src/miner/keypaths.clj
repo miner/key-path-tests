@@ -183,9 +183,12 @@
             (repeat (make-big-map width (dec depth))))
     nil))
 
+;; SEM: Beware lazy functions that return immediately without doing any work.  Use this
+;; function to force the results to be realized.
 (defn work [coll]
   (transduce (map hash) max Long/MIN_VALUE coll))
 
+;; SEM: make sure you get the right answer before you measure performance.
 (defn validate? [nam fun]
   (let [sample {:a :A, :b :B, :c {:d :D}, :e {:f {:g :G, :h :H}}}
         answer-set #{[:a] [:b] [:c :d] [:e :f :g] [:e :f :h]}
